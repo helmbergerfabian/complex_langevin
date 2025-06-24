@@ -2,8 +2,14 @@
 from .base import SimulationBackend
 
 class PythonBackend(SimulationBackend):
-    def compile(self):
+    def __init__(self):
+        super().__init__()
+        self._kernel = (lambda f: f)
         print("Using PYTHON backend.")
+
+    @property
+    def kernel(self):
+        return self._kernel
 
     def parallel_loop(self, kernel_function, iter_max, *args):
         '''Executes a kernel function in a loop for iter_max iterations.

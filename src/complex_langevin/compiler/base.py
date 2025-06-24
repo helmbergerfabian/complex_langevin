@@ -2,9 +2,16 @@
 from abc import ABC, abstractmethod
 
 class SimulationBackend(ABC):
+
+    @property
     @abstractmethod
-    def compile(self):
+    def kernel(self):
+        """Return a function decorator to use for kernel functions."""
         pass
+
+    # @abstractmethod
+    # def compile(self):
+    #     pass
 
     @abstractmethod
     def parallel_loop(self, kernel_function, iter_max, *args):
