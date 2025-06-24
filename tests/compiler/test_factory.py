@@ -1,7 +1,6 @@
 from pytest import MonkeyPatch
-
-from compiler.factory import get_backend
-from compiler.python_backend import PythonBackend
+from complex_langevin.compiler.factory import get_backend
+from complex_langevin.compiler.python_backend import PythonBackend
 
 
 def test_python_backend_selection(monkeypatch: MonkeyPatch):
