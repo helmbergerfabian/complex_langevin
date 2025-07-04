@@ -15,5 +15,10 @@ def get_backend():
     if target == 'numba':
         from .numba_backend import NumbaBackend
         return NumbaBackend()
+    
+    if target == 'cuda':
+        from .cuda_backend import CudaBackend
+        return CudaBackend()
+    
     else:
         raise ValueError(f"Unknown target backend: {target}")
