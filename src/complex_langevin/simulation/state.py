@@ -1,6 +1,5 @@
 ### complex_langevi/simulation/state.py
 
-from complex_langevin.compiler.parallel import parallel_loop, act_parallel_loop
 # from complex_langevin.compiler.factory import get_backend
 from complex_langevin.config import CL_COMPLEX, CL_REAL
 
