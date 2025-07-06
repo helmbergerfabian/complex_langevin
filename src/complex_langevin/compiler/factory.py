@@ -1,24 +1,31 @@
 ### complex_langevin/compiler/factory.py
 
+import os
+_backend_instance = None
+
 def get_backend():
     '''Factory function to get the appropriate backend based on the MY_NUMBA_TARGET environment variable.
     Returns:
         SimulationBackend: An instance of the backend class.'''
+    global _backend_instance
+    if _backend_instance is not None:
+        return _backend_instance
 
-    import os
-    target = os.environ.get('MY_NUMBA_TARGET', 'python').lower()
+    target = os.environ.get('MY_NUMBA_TARGET', 'numba').lower()
     
     if target == 'python':
         from .python_backend import PythonBackend
-        return PythonBackend()
+        _backend_instance = PythonBackend()
     
-    if target == 'numba':
+    elif target == 'numba':
         from .numba_backend import NumbaBackend
-        return NumbaBackend()
+        _backend_instance = NumbaBackend()
     
-    if target == 'cuda':
+    elif target == 'cuda':
         from .cuda_backend import CudaBackend
-        return CudaBackend()
+        _backend_instance = CudaBackend()
     
     else:
         raise ValueError(f"Unknown target backend: {target}")
+    
+    return _backend_instance
