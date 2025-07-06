@@ -42,6 +42,3 @@ class NumbaBackend(SimulationBackend):
 
             compiled_act_kernels[kernel_function] = numba_func
         compiled_act_kernels[kernel_function](iter_max, act_matrix, *args)
-
-    def zeros(n, dtype):
-        return np.zeros(n, dtype=dtype)

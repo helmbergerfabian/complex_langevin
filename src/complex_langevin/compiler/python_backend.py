@@ -38,6 +38,3 @@ class PythonBackend(SimulationBackend):
         for xi in range(iter_max):
             if act_matrix[xi]:
                 kernel_function(xi, *args)
-
-    def zeros(n, dtype):
-        return np.zeros(n, dtype=dtype)
