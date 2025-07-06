@@ -2,6 +2,7 @@
 ### complex_langevin/compiler/numba_backend.py
 from .base import SimulationBackend
 import numba
+import numpy as np
 from numba import prange
 
 compiled_kernels = {}
@@ -41,3 +42,6 @@ class NumbaBackend(SimulationBackend):
 
             compiled_act_kernels[kernel_function] = numba_func
         compiled_act_kernels[kernel_function](iter_max, act_matrix, *args)
+
+    def zeros(n, dtype):
+        return np.zeros(n, dtype=dtype)

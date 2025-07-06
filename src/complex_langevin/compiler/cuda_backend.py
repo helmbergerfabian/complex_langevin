@@ -1,6 +1,7 @@
 
 ### complex_langevin/compiler/cuda_backend.py
 import math, numba
+import numpy as np
 from itertools import count
 from numba import cuda
 from .base import SimulationBackend
@@ -72,3 +73,7 @@ class CudaBackend(SimulationBackend):
             compiled_act_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function, with_activation=True)
         blockspergrid = math.ceil(iter_max / threadsperblock)
         compiled_act_kernels[kernel_function][blockspergrid, threadsperblock, stream](iter_max, act_matrix, *args)
+
+    def zeros(n, dtype):
+        host = np.zeros(n, dtype=dtype)
+        return cuda.to_device(host)
