@@ -48,6 +48,20 @@ class CudaBackend(SimulationBackend):
         return cuda.jit(namespace[f'{name}_cuda_kernel'])
 
     def parallel_loop(self, kernel_function, iter_max, *args, stream=None):
+        """       
+        Launches a CUDA kernel function in parallel over a specified number of iterations.
+        This method checks if the given kernel function has already been compiled. If not, it compiles the kernel.
+        It then calculates the number of blocks per grid required to cover all iterations, and launches the kernel
+        with the specified arguments and CUDA stream.
+        Args:
+            kernel_function (callable): The CUDA kernel function to execute.
+            iter_max (int): The total number of iterations to perform.
+            *args: Additional arguments to pass to the kernel function.
+            stream (cuda.Stream, optional): CUDA stream to use for kernel execution. Defaults to None.
+        Returns:
+            None
+        """
+ 
         if kernel_function not in compiled_kernels:
             compiled_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function)
         blockspergrid = math.ceil(iter_max / threadsperblock)
