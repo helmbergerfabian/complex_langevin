@@ -58,6 +58,3 @@ class CudaBackend(SimulationBackend):
             compiled_act_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function, with_activation=True)
         blockspergrid = math.ceil(iter_max / threadsperblock)
         compiled_act_kernels[kernel_function][blockspergrid, threadsperblock, stream](iter_max, act_matrix, *args)
-
-    def act_loop(self, kernel_function, act_matrix, iter_max, *args, stream=None):
-        self.act_parallel_loop(kernel_function, act_matrix, iter_max, *args, stream)
