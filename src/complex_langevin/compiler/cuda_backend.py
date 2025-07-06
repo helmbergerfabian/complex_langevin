@@ -73,7 +73,3 @@ class CudaBackend(SimulationBackend):
             compiled_act_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function, with_activation=True)
         blockspergrid = math.ceil(iter_max / threadsperblock)
         compiled_act_kernels[kernel_function][blockspergrid, threadsperblock, stream](iter_max, act_matrix, *args)
-
-    def zeros(n, dtype):
-        host = np.zeros(n, dtype=dtype)
-        return cuda.to_device(host)
