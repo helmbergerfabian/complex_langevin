@@ -1,5 +1,6 @@
 ### complex_langevin/compiler/python_backend.py
 from .base import SimulationBackend
+import numpy as np
 
 class PythonBackend(SimulationBackend):
     def __init__(self):
@@ -10,7 +11,7 @@ class PythonBackend(SimulationBackend):
     @property
     def kernel(self):
         return self._kernel
-
+    
     def parallel_loop(self, kernel_function, iter_max, *args):
         '''Executes a kernel function in a loop for iter_max iterations.
         This method does not use any parallelization and runs sequentially.
@@ -37,3 +38,6 @@ class PythonBackend(SimulationBackend):
         for xi in range(iter_max):
             if act_matrix[xi]:
                 kernel_function(xi, *args)
+
+    def zeros(n, dtype):
+        return np.zeros(n, dtype=dtype)
