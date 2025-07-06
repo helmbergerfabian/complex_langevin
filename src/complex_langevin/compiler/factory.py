@@ -22,3 +22,5 @@ def get_backend():
     
     else:
         raise ValueError(f"Unknown target backend: {target}")
+
+backend = get_backend()
