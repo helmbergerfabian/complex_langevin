@@ -6,7 +6,6 @@ class PythonBackend(SimulationBackend):
     def __init__(self):
         super().__init__()
         self._kernel = (lambda f: f)
-        print("Using PYTHON backend.")
 
     @property
     def kernel(self):

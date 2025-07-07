@@ -16,7 +16,6 @@ class CudaBackend(SimulationBackend):
         super().__init__()
         self._kernel = numba.jit(nogil=True, fastmath=True)
         self._unique_counter = count()
-        print("Using CUDA backend.")
 
     @property
     def kernel(self):
