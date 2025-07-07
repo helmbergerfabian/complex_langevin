@@ -18,32 +18,38 @@ def sample_field():
 def test_drift_against_manual(sigma, lamb, sample_field):
     model = ZeroDScalarPhi4(sigma=CL_COMPLEX(sigma), lamb=CL_REAL(lamb))
 
-    phi = sample_field
-    drift = model.drift(phi)
+    drift_func = model.drift()
+    drift_array = np.zeros_like(sample_field, dtype=CL_COMPLEX)
+    idx = 0
+    drift_func(idx, drift_array, sample_field)
+    expected = sigma * sample_field[idx] + lamb * sample_field[idx]**3
     
-    expected = sigma * phi + lamb * phi**3
-    
-    np.testing.assert_allclose(drift, expected, rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(drift_array[idx], expected, rtol=1e-5, atol=1e-7)
 
 
 def test_action_against_manual(sample_field):
     sigma = CL_COMPLEX(2.0 + 0j)
     lamb = CL_REAL(0.25)
-
     model = ZeroDScalarPhi4(sigma, lamb)
 
-    phi = sample_field
-    action = model.action(phi)
+    action_func = model.action()
+    action_array = np.zeros_like(sample_field, dtype=CL_COMPLEX)
+    idx = 0
+    action_func(idx, action_array, sample_field)
+    expected = sigma * sample_field[idx]**2/2 + lamb * sample_field[idx]**4/4
 
-    expected = 0.5 * sigma * phi**2 + 0.25 * lamb * phi**4
-
-    np.testing.assert_allclose(action, expected, rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(action_array[idx], expected, rtol=1e-5, atol=1e-7)
 
 
 def test_precision_dtype(sample_field):
-    sigma = CL_COMPLEX(1.0 + 0j)
-    lamb = CL_REAL(1.0)
+    sigma = CL_COMPLEX(2.0 + 0j)
+    lamb = CL_REAL(0.25)
     model = ZeroDScalarPhi4(sigma, lamb)
 
-    result = model.drift(sample_field)
+    action_func = model.action()
+    action_array = np.zeros_like(sample_field, dtype=CL_COMPLEX)
+    idx = 0
+    action_func(idx, action_array, sample_field)
+
+    result = action_array[0]
     assert result.dtype == CL_COMPLEX
