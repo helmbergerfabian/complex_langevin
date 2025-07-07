@@ -11,7 +11,7 @@ def backend():
 def test_parallel_loop_basic(backend: CudaBackend):
     from numba import cuda
     
-    num = int(1e2)
+    num = int(1e4)
     arr = np.zeros(num, dtype=np.int32)
     d_arr = cuda.to_device(arr)
 
@@ -28,7 +28,7 @@ def test_parallel_loop_basic(backend: CudaBackend):
 def test_act_parallel_loop(backend: CudaBackend):
     from numba import cuda
 
-    num = int(1e2)
+    num = int(1e4)
     arr = np.zeros(num, dtype=np.int32)
     activation = np.array([i % 2 == 1 for i in range(num)])
     d_arr = cuda.to_device(arr) 
