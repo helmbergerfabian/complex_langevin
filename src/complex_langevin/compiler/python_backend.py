@@ -6,7 +6,8 @@ class PythonBackend(SimulationBackend):
     def __init__(self):
         super().__init__()
         self._kernel = (lambda f: f)
-
+        self.use_cuda = False
+        
     @property
     def kernel(self):
         return self._kernel
