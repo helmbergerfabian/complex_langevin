@@ -1,5 +1,5 @@
 
-### complex_langevin/compiler/cuda_backend.py
+### complex_langevin/compiler/zero_d_scalar_phi4.py
 from .base import Model
 from complex_langevin.compiler.factory import get_backend
 from complex_langevin.config import CL_REAL, CL_COMPLEX, CL_INT
