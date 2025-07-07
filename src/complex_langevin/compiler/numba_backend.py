@@ -15,6 +15,7 @@ class NumbaBackend(SimulationBackend):
     def __init__(self):
         super().__init__()
         self._kernel = numba.njit(nogil=True, fastmath=True)
+        self.use_cuda = False
 
     @property
     def kernel(self):
