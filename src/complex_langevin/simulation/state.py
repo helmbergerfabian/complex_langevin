@@ -19,7 +19,8 @@ class SimState:
         self.phi_read = np.zeros(n_seeds, dtype=CL_COMPLEX)
         self.phi_write = self.phi_read.copy()
 
-        self.noise = np.zeros(n_seeds, dtype=CL_REAL)
+        self.noise_arr = np.zeros(n_seeds, dtype=CL_REAL)
+        self.drift_arr = np.zeros(n_seeds, dtype=CL_COMPLEX)
         self.langevin_time = np.zeros(n_seeds, dtype=CL_REAL)
 
         
