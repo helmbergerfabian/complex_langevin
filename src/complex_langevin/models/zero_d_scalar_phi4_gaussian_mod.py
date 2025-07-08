@@ -39,21 +39,21 @@ class ZeroDScalarPhi4Gaussian(Model):
 
         return _drift
     
-    def action(self):
-        import cmath
+    # def action(self):
+    #     import cmath
 
-        _sigma = self.sigma
-        _lamb = self.lamb
-        _massmod = self.massmod
-        _pull = self.pull
+    #     _sigma = self.sigma
+    #     _lamb = self.lamb
+    #     _massmod = self.massmod
+    #     _pull = self.pull
 
-        @backend.kernel
-        def _action(idx, action_arr, phi_arr):
-            phi_idx = phi_arr[idx]
+    #     @backend.kernel
+    #     def _action(idx, action_arr, phi_arr):
+    #         phi_idx = phi_arr[idx]
 
-            action = _sigma/2*phi_idx**2+_lamb/4*phi_idx**4
-            # mod = -cmath.log(1+)
+    #         action = _sigma/2*phi_idx**2+_lamb/4*phi_idx**4
+    #         # mod = -cmath.log(1+)
 
-            action_arr[idx] = 1# action + mod
+    #         action_arr[idx] = 1# action + mod
 
-        return _action
+    #     return _action
