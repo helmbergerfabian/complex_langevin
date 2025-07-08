@@ -16,10 +16,10 @@ class ZeroDScalarPhi4(Model):
         _lamb = self.lamb
 
         @backend.kernel
-        def _drift(idx, drift, phi):
+        def _drift(idx, drift_arr, phi):
             phi = phi[idx]
             val = _sigma * phi + _lamb * phi**3
-            drift[idx] = val
+            drift_arr[idx] = val
         return _drift
 
     def action(self):
