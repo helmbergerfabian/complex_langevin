@@ -67,9 +67,13 @@ class CudaBackend(SimulationBackend):
             compiled_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function)
         blockspergrid = math.ceil(iter_max / self.threadsperblock)
         compiled_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, *args)
+        blockspergrid = math.ceil(iter_max / self.threadsperblock)
+        compiled_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, *args)
 
     def act_parallel_loop(self, kernel_function, act_matrix, iter_max, *args, stream=None):
         if kernel_function not in compiled_act_kernels:
             compiled_act_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function, with_activation=True)
+        blockspergrid = math.ceil(iter_max / self.threadsperblock)
+        compiled_act_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, act_matrix, *args)
         blockspergrid = math.ceil(iter_max / self.threadsperblock)
         compiled_act_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, act_matrix, *args)
