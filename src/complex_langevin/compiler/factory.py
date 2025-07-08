@@ -4,7 +4,10 @@ import os
 _backend_instance = None
 _target = None
 
-def print_backend_info(target):
+def print_backend_info(target=None):
+    if target is None: 
+        target = os.environ["MY_NUMBA_TARGET"]
+
     if target == 'numba': print("Using NUMBA backend.")
     elif target == 'cuda': print("Using CUDA backend.")
     elif target == 'python': print("Using PYTHON backend.")
@@ -37,5 +40,5 @@ def get_backend():
         
         _target = target
         
-    print_backend_info(target)
+    # print_backend_info(target)
     return _backend_instance
