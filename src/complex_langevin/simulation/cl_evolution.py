@@ -44,6 +44,6 @@ class cl_evolution():
         else:
             import numpy as np
             @self.backend.kernel
-            def _generate_noise(idx, noise_arr):
+            def _generate_noise(idx, noise_arr, rng):
                 noise_arr[idx] = SQRT2 * CL_REAL(np.random.normal())
             return _generate_noise
