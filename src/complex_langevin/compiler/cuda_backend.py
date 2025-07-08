@@ -8,7 +8,6 @@ from .base import SimulationBackend
 
 compiled_kernels = {}
 compiled_act_kernels = {}
-threadsperblock = 256
 
 
 class CudaBackend(SimulationBackend):
@@ -17,6 +16,7 @@ class CudaBackend(SimulationBackend):
         self._kernel = numba.jit(nogil=True, fastmath=True)
         self._unique_counter = count()
         self.use_cuda = True
+        self.threadsperblock = 256
 
     @property
     def kernel(self):
