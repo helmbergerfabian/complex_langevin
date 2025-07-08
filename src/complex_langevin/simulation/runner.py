@@ -23,6 +23,9 @@ class SimulationRunner:
         self.drift_kernel = model.drift()
         self.noise_kernel = evolution.generate_noise()
 
+        self.noise_arr = state.noise_arr
+        self.rng = evolution.rng
+
     def update_noise(self):
         """Generates standard Gaussian noise for each seed."""
-        self.backend.parallel_loop(self.noise_kernel, self.state.n_seeds, self.state.noise_arr)
+        self.backend.parallel_loop(self.noise_kernel, self.state.n_seeds, self.noise_arr, self.rng)
