@@ -1,35 +1,38 @@
-
-### complex_langevin/compiler/zero_d_scalar_phi4.py
-from .base import Model
+# complex_langevin/compiler/zero_d_scalar_phi4.py
+from complex_langevin.models.base import Model
+from complex_langevin.utils.cl_types import DriftKernel
 from complex_langevin.compiler.factory import get_backend
-from complex_langevin.config import CL_REAL, CL_COMPLEX, CL_INT
+from complex_langevin.config import CL_REAL, CL_COMPLEX
 
 backend = get_backend()
 
 class ZeroDScalarPhi4(Model):
-    def __init__(self, sigma: CL_COMPLEX, lamb: CL_REAL):
+    def __init__(self, sigma: CL_COMPLEX, lamb: CL_REAL) -> None:
         self.sigma = sigma
         self.lamb = lamb
+        self.drift_kernel = self.generate_drift_kernel()
 
-    def drift(self):
+    def generate_drift_kernel(self) -> DriftKernel:
         _sigma = self.sigma
         _lamb = self.lamb
 
         @backend.kernel
-        def _drift(idx, drift_arr, phi):
-            phi = phi[idx]
-            val = _sigma * phi + _lamb * phi**3
-            drift_arr[idx] = val
-        return _drift
+        def _drift_kernel(idx, drift_arr, phi_arr) -> None:
+            phi_idx = phi_arr[idx]
+            drift_arr[idx] = _sigma * phi_idx + _lamb * phi_idx**3
 
-    def action(self):
+        return _drift_kernel
+
+
+    def generate_action_kernel(self) -> callable:
+        raise NotImplementedError("generate_action not yet implemented")
         _sigma = self.sigma
         _lamb = self.lamb
         
         @backend.kernel
-        def _drift(idx, action, phi):
-            phi = phi[idx]
-            val = 0.5*_sigma * phi**2 + 0.25*_lamb * phi**4
-            action[idx] = val
+        def _drift(idx, action_arr, phi_arr) -> None:
+            phi_idx = phi_arr[idx]
+            val = 0.5*_sigma * phi_idx**2 + 0.25*_lamb * phi_idx**4
+            action_arr[idx] = val
 
         return _drift
