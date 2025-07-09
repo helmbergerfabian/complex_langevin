@@ -2,8 +2,9 @@
 ### complex_langevin/simulation/cl_evolution.py
 from complex_langevin.models.base import Model 
 from complex_langevin.compiler.factory import get_backend
-from complex_langevin.config import CL_REAL, CL_COMPLEX
+from complex_langevin.config import CL_REAL
 from complex_langevin.simulation.state import SimState
+from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel
 
 from numba.cuda.random import xoroshiro128p_normal_float32, create_xoroshiro128p_states
 backend = get_backend()
@@ -12,13 +13,11 @@ import math
 SQRT2 = math.sqrt(2)
 
 import numpy as np
+
 class cl_evolution():
-    def __init__(self, model: Model, simstate: SimState):
+    def __init__(self, model: Model, simstate: SimState) -> None:
         self.model = model
 
-        # Initialize kernels
-        self.drift_kernel = model.drift()
-        self.action_kernel = model.action()
         self.noise_seed = 0
         self.n_seeds = simstate.n_seeds
         self.simstate = simstate
@@ -33,17 +32,27 @@ class cl_evolution():
         else:
             self.rng = None
 
-    def generate_noise(self):
+    def generate_noise_kernel(self) -> NoiseKernel:
         if self.backend.use_cuda:
+
             @self.backend.kernel
-            def _generate_noise(idx, noise_arr, rng):
+            def _noise_kernel(idx, noise_arr, rng) -> None:
                 r = xoroshiro128p_normal_float32(rng, idx)
                 noise_arr[idx] = SQRT2 * r
-            return _generate_noise
-        
+
+            return _noise_kernel
         else:
-            import numpy as np
             @self.backend.kernel
-            def _generate_noise(idx, noise_arr, rng):
+            def _generate_noise(idx, noise_arr, rng) -> None:
                 noise_arr[idx] = SQRT2 * CL_REAL(np.random.normal())
+
             return _generate_noise
+
+    def generate_evolution_kernel(self) -> EvolveKernel:
+
+        @self.backend.kernel
+        def _evolve_kernel(idx, phi_arr, drift_arr, noise_arr, dt_arr) -> None:
+            dt_idx = dt_arr[idx]
+            phi_arr[idx] += dt_idx * drift_arr[idx] + math.sqrt(dt_idx) * noise_arr[idx]
+
+        return _evolve_kernel
