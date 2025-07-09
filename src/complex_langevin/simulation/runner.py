@@ -20,12 +20,24 @@ class SimulationRunner:
         self.model = model
         self.evolution = evolution
 
-        self.drift_kernel = model.drift()
-        self.noise_kernel = evolution.generate_noise()
+        self.drift_kernel = model.generate_drift_kernel()
+        self.noise_kernel = evolution.generate_noise_kernel()
+        self.evolve_kernel = evolution.generate_evolution_kernel()
 
-        self.noise_arr = state.noise_arr
         self.rng = evolution.rng
 
     def update_noise(self):
         """Generates standard Gaussian noise for each seed."""
-        self.backend.parallel_loop(self.noise_kernel, self.state.n_seeds, self.noise_arr, self.rng)
+        self.backend.parallel_loop(self.noise_kernel, self.state.n_seeds, 
+                                   self.state.noise_arr, self.rng)
+    
+    def update_drift(self):
+        """Updates the drift term in the simulation state."""
+        self.backend.parallel_loop(self.drift_kernel, self.state.n_seeds, 
+                                   self.state.drift_arr, self.state.phi_read)
+
+    def evolve(self):
+        """Performs one step of the Complex Langevin evolution."""
+        self.backend.parallel_loop(self.evolve_kernel, self.state.n_seeds, 
+                                   self.state.phi_write, self.state.drift_arr, 
+                                   self.state.noise_arr, self.state.dt_arr)
