@@ -1,12 +1,12 @@
-### complex_langevin/models/base.py
-
+# complex_langevin/models/base.py
 from abc import ABC, abstractmethod
+from complex_langevin.utils.cl_types import DriftKernel
 
 class Model(ABC):
     @abstractmethod
-    def drift(self, x):
+    def generate_drift_kernel(self) -> DriftKernel:
         pass
-    
+
     @abstractmethod
-    def action(self, x):
+    def generate_action_kernel(self) -> callable:
         pass
