@@ -15,12 +15,13 @@ class SimState:
     """
     def __init__(self, n_seeds: int):
         self.n_seeds = n_seeds
+        self.dt_base = CL_REAL(1e-4)
         
         self.phi_read = np.zeros(n_seeds, dtype=CL_COMPLEX)
         self.phi_write = self.phi_read.copy()
 
         self.noise_arr = np.zeros(n_seeds, dtype=CL_REAL)
-        self.dt_arr = np.ones(n_seeds, dtype=CL_REAL) * 1e-3
+        self.dt_ada_arr = np.ones(n_seeds, dtype=CL_REAL) * self.dt_base
         self.drift_arr = np.zeros(n_seeds, dtype=CL_COMPLEX)
         self.langevin_time = np.zeros(n_seeds, dtype=CL_REAL)
 
