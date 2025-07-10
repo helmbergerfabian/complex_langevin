@@ -4,13 +4,15 @@ from complex_langevin.models.base import Model
 from complex_langevin.compiler.factory import get_backend
 from complex_langevin.config import CL_REAL
 from complex_langevin.simulation.state import SimState
-from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel
+from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel, dtadaKernel
 
 from numba.cuda.random import xoroshiro128p_normal_float32, create_xoroshiro128p_states
 backend = get_backend()
 
-import math 
+import math, cmath
 SQRT2 = math.sqrt(2)
+DS_MAX_LOWER = 1e-12
+mean_dS_max = 1
 
 import numpy as np
 
@@ -51,8 +53,19 @@ class cl_evolution():
     def generate_evolution_kernel(self) -> EvolveKernel:
 
         @self.backend.kernel
-        def _evolve_kernel(idx, phi_arr, drift_arr, noise_arr, dt_arr) -> None:
-            dt_idx = dt_arr[idx]
+        def _evolve_kernel(idx, phi_arr, drift_arr, noise_arr, dt_ada_arr, dt_base) -> None:
+            dt_idx = dt_ada_arr[idx]*dt_base
             phi_arr[idx] += dt_idx * drift_arr[idx] + math.sqrt(dt_idx) * noise_arr[idx]
 
         return _evolve_kernel
+    
+    def generate_dt_ada_kernel(self) -> dtadaKernel:
+
+        @self.backend.kernel
+        def _dt_ada_kernel(idx, dt_ada_arr, drift_arr) -> None:
+            drift_idx = abs(drift_arr[idx])
+            dt_ada_arr[idx] = 1
+            if drift_idx > DS_MAX_LOWER and mean_dS_max < drift_idx:
+                dt_ada_arr[idx] = mean_dS_max / drift_idx 
+
+        return _dt_ada_kernel
