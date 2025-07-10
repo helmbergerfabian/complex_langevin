@@ -21,3 +21,8 @@ class EvolveKernel(Protocol):
 class dtadaKernel(Protocol):
     def __call__(self, idx: int, dt_ada_arr: Any, drift_arr: Any) -> None: 
         ...
+
+
+from typing import Union
+import complex_langevin.compiler as comp
+BackendType = Union[comp.PythonBackend, comp.NumbaBackend, comp.CudaBackend]
