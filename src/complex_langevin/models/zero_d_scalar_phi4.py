@@ -19,7 +19,7 @@ class ZeroDScalarPhi4(Model):
         @backend.kernel
         def _drift_kernel(idx, drift_arr, phi_arr) -> None:
             phi_idx = phi_arr[idx]
-            drift_arr[idx] = _sigma * phi_idx + _lamb * phi_idx**3
+            drift_arr[idx] = -(_sigma * phi_idx + _lamb * phi_idx**3)
 
         return _drift_kernel
 
