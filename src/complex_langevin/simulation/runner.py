@@ -12,19 +12,19 @@ class SimulationRunner:
     Controls the simulation loop for Complex Langevin evolution.
     """
 
-    def __init__(self, state: SimState, model: Model, evolution: cl_evolution):
+    def __init__(self, state: SimState, model: Model, evolution: cl_evolution = None):
         self.backend = get_backend()
         self.use_cuda = self.backend.use_cuda
 
         self.state = state
         self.model = model
-        self.evolution = evolution
+        self.evolution = evolution or cl_evolution(model, state)
 
         self.drift_kernel = model.generate_drift_kernel()
-        self.noise_kernel = evolution.generate_noise_kernel()
-        self.evolve_kernel = evolution.generate_evolution_kernel()
+        self.noise_kernel = self.evolution.generate_noise_kernel()
+        self.evolve_kernel = self.evolution.generate_evolution_kernel()
 
-        self.rng = evolution.rng
+        self.rng = self.evolution.rng
 
     def update_noise(self):
         """Generates standard Gaussian noise for each seed."""
