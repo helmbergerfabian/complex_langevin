@@ -23,7 +23,8 @@ class SimulationRunner:
         self.drift_kernel = model.generate_drift_kernel()
         self.noise_kernel = self.evolution.generate_noise_kernel()
         self.evolve_kernel = self.evolution.generate_evolution_kernel()
-
+        self.dt_ada_kernel = self.evolution.generate_dt_ada_kernel()
+        
         self.rng = self.evolution.rng
 
     def update_noise(self):
@@ -40,10 +41,18 @@ class SimulationRunner:
         """Performs one step of the Complex Langevin evolution."""
         self.backend.parallel_loop(self.evolve_kernel, self.state.n_seeds, 
                                    self.state.phi_write, self.state.drift_arr, 
-                                   self.state.noise_arr, self.state.dt_arr)
+                                   self.state.noise_arr, self.state.dt_ada_arr,
+                                   self.state.dt_base
+                                   )
     
+    def update_dt_ada(self):
+        self.backend.parallel_loop(self.dt_ada_kernel, self.state.n_seeds,
+                                   self.state.dt_ada_arr, self.state.drift_arr
+                                   )
+
     def step(self):
         self.update_noise()
         self.update_drift()
+        self.update_dt_ada()
         self.evolve()
         self.state.swap_buffers()
