@@ -1,20 +1,20 @@
-
-### complex_langevin/compiler/
-from .base import Model
+# complex_langevin/compiler/zero_d_scalar_phi4.py
+from complex_langevin.models.base import Model
+from complex_langevin.utils.cl_types import DriftKernel
 from complex_langevin.compiler.factory import get_backend
-from complex_langevin.config import CL_REAL, CL_COMPLEX, CL_INT
+from complex_langevin.config import CL_REAL, CL_COMPLEX
+import cmath
 
 backend = get_backend()
 
-class ZeroDScalarPhi4Gaussian(Model):
-    def __init__(self, sigma: CL_COMPLEX, lamb: CL_REAL, massmod: CL_COMPLEX, pull: CL_REAL):
+class ZeroDScalarPhi4GaussianMod(Model):
+    def __init__(self, sigma: CL_COMPLEX, lamb: CL_REAL, massmod: CL_COMPLEX, pull: CL_REAL) -> None:
         self.sigma = sigma
         self.lamb = lamb
         self.massmod = massmod
         self.pull = pull
 
-    def drift(self):
-        import cmath
+    def generate_drift_kernel(self) -> DriftKernel:
 
         _sigma = self.sigma
         _lamb = self.lamb
@@ -39,21 +39,6 @@ class ZeroDScalarPhi4Gaussian(Model):
 
         return _drift
     
-    # def action(self):
-    #     import cmath
 
-    #     _sigma = self.sigma
-    #     _lamb = self.lamb
-    #     _massmod = self.massmod
-    #     _pull = self.pull
-
-    #     @backend.kernel
-    #     def _action(idx, action_arr, phi_arr):
-    #         phi_idx = phi_arr[idx]
-
-    #         action = _sigma/2*phi_idx**2+_lamb/4*phi_idx**4
-    #         # mod = -cmath.log(1+)
-
-    #         action_arr[idx] = 1# action + mod
-
-    #     return _action
+    def generate_action_kernel(self) -> callable:
+        raise NotImplementedError("generate_action not yet implemented")
