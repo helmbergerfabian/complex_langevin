@@ -41,3 +41,9 @@ class SimulationRunner:
         self.backend.parallel_loop(self.evolve_kernel, self.state.n_seeds, 
                                    self.state.phi_write, self.state.drift_arr, 
                                    self.state.noise_arr, self.state.dt_arr)
+    
+    def step(self):
+        self.update_noise()
+        self.update_drift()
+        self.evolve()
+        self.state.swap_buffers()
