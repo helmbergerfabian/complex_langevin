@@ -1,16 +1,17 @@
 ### complex_langevin/compiler/python_backend.py
 from .base import SimulationBackend
+import numpy as np
 
 class PythonBackend(SimulationBackend):
     def __init__(self):
         super().__init__()
         self._kernel = (lambda f: f)
-        print("Using PYTHON backend.")
-
+        self.use_cuda = False
+        
     @property
     def kernel(self):
         return self._kernel
-
+    
     def parallel_loop(self, kernel_function, iter_max, *args):
         '''Executes a kernel function in a loop for iter_max iterations.
         This method does not use any parallelization and runs sequentially.

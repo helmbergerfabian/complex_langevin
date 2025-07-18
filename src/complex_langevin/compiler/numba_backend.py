@@ -2,6 +2,7 @@
 ### complex_langevin/compiler/numba_backend.py
 from .base import SimulationBackend
 import numba
+import numpy as np
 from numba import prange
 
 compiled_kernels = {}
@@ -14,7 +15,7 @@ class NumbaBackend(SimulationBackend):
     def __init__(self):
         super().__init__()
         self._kernel = numba.njit(nogil=True, fastmath=True)
-        print("Using NUMBA backend.")
+        self.use_cuda = False
 
     @property
     def kernel(self):

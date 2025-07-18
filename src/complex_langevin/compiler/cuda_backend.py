@@ -1,13 +1,13 @@
 
 ### complex_langevin/compiler/cuda_backend.py
 import math, numba
+import numpy as np
 from itertools import count
 from numba import cuda
 from .base import SimulationBackend
 
 compiled_kernels = {}
 compiled_act_kernels = {}
-threadsperblock = 256
 
 
 class CudaBackend(SimulationBackend):
@@ -15,7 +15,8 @@ class CudaBackend(SimulationBackend):
         super().__init__()
         self._kernel = numba.jit(nogil=True, fastmath=True)
         self._unique_counter = count()
-        print("Using CUDA backend.")
+        self.use_cuda = True
+        self.threadsperblock = 256
 
     @property
     def kernel(self):
@@ -64,11 +65,13 @@ class CudaBackend(SimulationBackend):
  
         if kernel_function not in compiled_kernels:
             compiled_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function)
-        blockspergrid = math.ceil(iter_max / threadsperblock)
-        compiled_kernels[kernel_function][blockspergrid, threadsperblock, stream](iter_max, *args)
+        blockspergrid = math.ceil(iter_max / self.threadsperblock)
+        compiled_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, *args)
+        # blockspergrid = math.ceil(iter_max / self.threadsperblock)
+        # compiled_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, *args)
 
     def act_parallel_loop(self, kernel_function, act_matrix, iter_max, *args, stream=None):
         if kernel_function not in compiled_act_kernels:
             compiled_act_kernels[kernel_function] = self._compile_cuda_kernel(kernel_function, with_activation=True)
-        blockspergrid = math.ceil(iter_max / threadsperblock)
-        compiled_act_kernels[kernel_function][blockspergrid, threadsperblock, stream](iter_max, act_matrix, *args)
+        blockspergrid = math.ceil(iter_max / self.threadsperblock)
+        compiled_act_kernels[kernel_function][blockspergrid, self.threadsperblock, stream](iter_max, act_matrix, *args)
