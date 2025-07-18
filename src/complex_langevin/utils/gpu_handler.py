@@ -5,12 +5,13 @@ from complex_langevin.simulation.state import SimState
 from numba.cuda.cudadrv.devicearray import DeviceNDArray
 from numpy import ndarray
 
-from complex_langevin.compiler.factory import get_backend
-backend = get_backend()
-use_cuda = backend.use_cuda
 
 class GPU_handler:
     def __init__(self, simstate: SimState, exclude=None):
+        from complex_langevin.compiler.factory import get_backend
+        backend = get_backend()
+        self.use_cuda = backend.use_cuda
+
         if exclude is None:
             self.exclude = []
         else:
@@ -26,7 +27,7 @@ class GPU_handler:
         """
         Transfer all tensors corresponding to tensor_data to the GPU and update the corresponding attributes.
         """
-        if use_cuda:
+        if self.use_cuda:
             for attr_name in self.tensor_names:
                 if attr_name not in self.exclude:
                     tensor: ndarray = getattr(self.simstate, attr_name) 
@@ -38,7 +39,7 @@ class GPU_handler:
         """
         Transfer all tensors corresponding to tensor_data from the GPU to the host and update the corresponding attributes.
         """
-        if use_cuda:
+        if self.use_cuda:
             for attr_name in self.tensor_names:
                 if attr_name not in self.exclude:
                     tensor = getattr(self.simstate, attr_name)
