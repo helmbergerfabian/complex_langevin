@@ -5,3 +5,4 @@ from .numba_backend import NumbaBackend
 from .cuda_backend import CudaBackend
 
 __all__ = ["get_backend"]
+backend = get_backend()
