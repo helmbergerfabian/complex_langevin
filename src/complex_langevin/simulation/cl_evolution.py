@@ -2,12 +2,13 @@
 ### complex_langevin/simulation/cl_evolution.py
 from complex_langevin.models.base import Model 
 from complex_langevin.compiler.factory import get_backend
+from complex_langevin.compiler import backend
 from complex_langevin.config import CL_REAL
 from complex_langevin.simulation.state import SimState
 from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel, dtadaKernel
 
 from numba.cuda.random import xoroshiro128p_normal_float32, create_xoroshiro128p_states
-backend = get_backend()
+# backend = get_backend()
 
 import math, cmath
 SQRT2 = math.sqrt(2)
@@ -33,6 +34,13 @@ class cl_evolution():
             )
         else:
             self.rng = None
+
+        if self.backend.use_cuda: self.to_device()
+
+    def to_device(self):
+        from complex_langevin.utils.gpu_handler import GPU_handler
+        self.handler = GPU_handler(self)
+        self.handler.to_device()           
 
     def generate_noise_kernel(self) -> NoiseKernel:
         if self.backend.use_cuda:
