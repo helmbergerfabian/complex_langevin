@@ -14,7 +14,7 @@ class NoiseKernel(Protocol):
 
 @runtime_checkable
 class EvolveKernel(Protocol):
-    def __call__(self, idx: int, phi_arr: Any, drift_arr: Any, noise_arr: Any, dt_ada_arr: Any, dt_base: CL_REAL) -> None: 
+    def __call__(self, idx: int, phi_arr: Any, drift_arr: Any, noise_arr: Any, dt_ada_arr: Any, dt_base: CL_REAL, langevin_time: Any) -> None: 
         ...
 
 @runtime_checkable
