@@ -40,9 +40,9 @@ class SimulationRunner:
     def evolve(self):
         """Performs one step of the Complex Langevin evolution."""
         self.backend.parallel_loop(self.evolve_kernel, self.state.n_seeds, 
-                                   self.state.phi_write, self.state.drift_arr, 
+                                   self.state.phi_read, self.state.drift_arr, 
                                    self.state.noise_arr, self.state.dt_ada_arr,
-                                   self.state.dt_base
+                                   self.state.dt_base, self.state.langevin_time
                                    )
     
     def update_dt_ada(self):
@@ -55,4 +55,4 @@ class SimulationRunner:
         self.update_drift()
         self.update_dt_ada()
         self.evolve()
-        self.state.swap_buffers()
+        # self.state.swap_buffers()
