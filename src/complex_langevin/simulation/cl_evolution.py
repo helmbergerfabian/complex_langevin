@@ -26,7 +26,7 @@ class cl_evolution():
         self.simstate = simstate
         self.backend = backend
         self.noise_arr = simstate.noise_arr
-
+        
         if backend.use_cuda:
             n_blocks = math.ceil(self.n_seeds / backend.threadsperblock)
             self.rng = create_xoroshiro128p_states(
@@ -35,12 +35,18 @@ class cl_evolution():
         else:
             self.rng = None
 
-        if self.backend.use_cuda: self.to_device()
-
+        if backend.use_cuda: 
+            from complex_langevin.utils.gpu_handler import GPU_handler
+            self.handler = GPU_handler(self)
+            self.to_device()
+        
     def to_device(self):
-        from complex_langevin.utils.gpu_handler import GPU_handler
-        self.handler = GPU_handler(self)
-        self.handler.to_device()           
+        self.handler.to_device()
+        print("Copied evolution arrays to device")
+
+    def to_host(self):
+        self.handler.to_host()
+        print("Copied evolution arrays to host")  
 
     def generate_noise_kernel(self) -> NoiseKernel:
         if self.backend.use_cuda:
@@ -61,14 +67,14 @@ class cl_evolution():
     def generate_evolution_kernel(self) -> EvolveKernel:
 
         @self.backend.kernel
-        def _evolve_kernel(idx, phi_arr, drift_arr, noise_arr, dt_ada_arr, dt_base) -> None:
+        def _evolve_kernel(idx, phi_arr, drift_arr, noise_arr, dt_ada_arr, dt_base, langevin_time) -> None:
             dt_idx = dt_ada_arr[idx]*dt_base
             phi_arr[idx] += dt_idx * drift_arr[idx] + math.sqrt(dt_idx) * noise_arr[idx]
+            langevin_time[idx] += dt_idx
 
         return _evolve_kernel
     
     def generate_dt_ada_kernel(self) -> dtadaKernel:
-
         @self.backend.kernel
         def _dt_ada_kernel(idx, dt_ada_arr, drift_arr) -> None:
             drift_idx = abs(drift_arr[idx])
@@ -76,4 +82,6 @@ class cl_evolution():
             if drift_idx > DS_MAX_LOWER and mean_dS_max < drift_idx:
                 dt_ada_arr[idx] = mean_dS_max / drift_idx 
 
+
+            
         return _dt_ada_kernel
