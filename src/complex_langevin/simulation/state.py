@@ -14,9 +14,9 @@ class SimState:
     Holds simulation state for multiple Langevin trajectories (seeds).
     Supports CPU or GPU (CUDA) via backend abstraction.
     """
-    def __init__(self, n_seeds: int):
+    def __init__(self, n_seeds: int, dt_base = None):
         self.n_seeds = n_seeds
-        self.dt_base = CL_REAL(1e-4)
+        self.dt_base = dt_base or CL_REAL(1e-4)
         
         self.phi_read = np.zeros(n_seeds, dtype=CL_COMPLEX)
         # self.phi_write = self.phi_read.copy()
