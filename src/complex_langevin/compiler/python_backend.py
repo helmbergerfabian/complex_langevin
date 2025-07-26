@@ -1,6 +1,5 @@
 ### complex_langevin/compiler/python_backend.py
 from .base import SimulationBackend
-import numpy as np
 
 class PythonBackend(SimulationBackend):
     def __init__(self):
