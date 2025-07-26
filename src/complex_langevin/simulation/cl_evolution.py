@@ -3,19 +3,17 @@
 from complex_langevin.models.base import Model 
 from complex_langevin.compiler.factory import get_backend
 from complex_langevin.compiler import backend
-from complex_langevin.config import CL_REAL
+from complex_langevin.config import CL_REAL, log
 from complex_langevin.simulation.state import SimState
 from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel, dtadaKernel
-
+from numpy.random import normal
 from numba.cuda.random import xoroshiro128p_normal_float32, create_xoroshiro128p_states
-# backend = get_backend()
 
-import math, cmath
+import math
 SQRT2 = math.sqrt(2)
 DS_MAX_LOWER = 1e-12
 mean_dS_max = 1
 
-import numpy as np
 
 class cl_evolution():
     def __init__(self, model: Model, simstate: SimState) -> None:
@@ -42,11 +40,11 @@ class cl_evolution():
         
     def to_device(self):
         self.handler.to_device()
-        print("Copied evolution arrays to device")
+        self.log("Copied evolution arrays to device")
 
     def to_host(self):
         self.handler.to_host()
-        print("Copied evolution arrays to host")  
+        self.log("Copied evolution arrays to host")  
 
     def generate_noise_kernel(self) -> NoiseKernel:
         if self.backend.use_cuda:
@@ -60,7 +58,7 @@ class cl_evolution():
         else:
             @self.backend.kernel
             def _generate_noise(idx, noise_arr, rng) -> None:
-                noise_arr[idx] = SQRT2 * CL_REAL(np.random.normal())
+                noise_arr[idx] = SQRT2 * CL_REAL(normal())
 
             return _generate_noise
 
@@ -82,6 +80,7 @@ class cl_evolution():
             if drift_idx > DS_MAX_LOWER and mean_dS_max < drift_idx:
                 dt_ada_arr[idx] = mean_dS_max / drift_idx 
 
-
-            
         return _dt_ada_kernel
+
+
+    def log(self, message): log(self, "EVO", message)
