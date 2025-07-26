@@ -1,4 +1,4 @@
-import numpy as np
+from numpy import ndarray
 from numba import cuda # type: ignore 
 from complex_langevin.simulation.state import SimState
 
@@ -20,7 +20,7 @@ class GPU_handler:
         self.simstate = simstate
         self.tensor_names = [
             attr_name for attr_name, attr in simstate.__dict__.items() 
-            if isinstance(attr, np.ndarray)
+            if isinstance(attr, ndarray)
             ]
 
     def to_device(self):
