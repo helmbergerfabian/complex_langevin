@@ -2,7 +2,6 @@
 ### complex_langevin/compiler/numba_backend.py
 from .base import SimulationBackend
 import numba
-import numpy as np
 from numba import prange
 
 compiled_kernels = {}
