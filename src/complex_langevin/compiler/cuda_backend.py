@@ -1,7 +1,6 @@
 
 ### complex_langevin/compiler/cuda_backend.py
 import math, numba
-import numpy as np
 from itertools import count
 from numba import cuda
 from .base import SimulationBackend
