@@ -1,11 +1,17 @@
-import numpy as np
 import os
+from time import time
+os.environ["RUNNER_START_TIME"] = str(time())
+
 
 from complex_langevin.simulation.state import SimState
 from complex_langevin.models.base import Model
 from complex_langevin.compiler.factory import get_backend
 from complex_langevin.config import CL_REAL
 from complex_langevin.simulation.cl_evolution import cl_evolution
+
+from complex_langevin.config import log
+
+import numpy as np
 
 class SimulationRunner:
     """
@@ -24,8 +30,8 @@ class SimulationRunner:
         self.noise_kernel = self.evolution.generate_noise_kernel()
         self.evolve_kernel = self.evolution.generate_evolution_kernel()
         self.dt_ada_kernel = self.evolution.generate_dt_ada_kernel()
-        
         self.rng = self.evolution.rng
+
 
     def update_noise(self):
         """Generates standard Gaussian noise for each seed."""
@@ -53,6 +59,10 @@ class SimulationRunner:
     def step(self):
         self.update_noise()
         self.update_drift()
-        self.update_dt_ada()
+        # self.update_dt_ada()
         self.evolve()
+        self.state.global_step += 1
+        # self.log(f"gloabl step: {self.state.global_step}")
         # self.state.swap_buffers()
+
+    def log(self, message): log(self, "RUN", message)
