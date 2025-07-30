@@ -59,7 +59,7 @@ class SimulationRunner:
     def step(self):
         self.update_noise()
         self.update_drift()
-        # self.update_dt_ada()
+        self.update_dt_ada()
         self.evolve()
         self.state.global_step += 1
         # self.log(f"gloabl step: {self.state.global_step}")
