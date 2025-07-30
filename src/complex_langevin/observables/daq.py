@@ -22,7 +22,7 @@ class DAQThread(Thread):
         self.in_q = in_q
         self.stop_event = stop_event
 
-        max_blocks = 10000  # configurable
+        max_blocks = 100  # configurable
         self.block_means = np.full((n_seeds, max_blocks), np.nan)
         self.block_counts = np.zeros(n_seeds, dtype=CL_INT)
         self.log_file = None
