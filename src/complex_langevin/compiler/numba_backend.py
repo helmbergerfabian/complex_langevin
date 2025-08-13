@@ -1,8 +1,8 @@
 
 ### complex_langevin/compiler/numba_backend.py
 from .base import SimulationBackend
-import numba
-from numba import prange
+import numba # type: ignore
+from numba import prange # type: ignore
 
 compiled_kernels = {}
 compiled_act_kernels = {}
@@ -22,7 +22,7 @@ class NumbaBackend(SimulationBackend):
     
     def parallel_loop(self, kernel_function, iter_max, *args):
         if kernel_function not in compiled_kernels:
-            @numba.njit(nogil=True, fastmath=True)
+            @numba.njit(parallel=True, nogil=True, fastmath=True)
             def numba_func(iter_max, *args):
                 for xi in prange(iter_max):
                     kernel_function(xi, *args)
