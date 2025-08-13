@@ -23,6 +23,8 @@ def mark_flush_mask(tau, tau_last_flush, flush_mask, block_counts, delta_tau_blo
             continue
         flush_mask[i] = (tau[i] - tau_last_flush[i]) > delta_tau_block
 
+
+
 @njit(parallel=True)
 def pack_block_means(obs_sum, count, tau, tau_last_flush, flush_mask, block_means):
     """
@@ -37,6 +39,55 @@ def pack_block_means(obs_sum, count, tau, tau_last_flush, flush_mask, block_mean
         else:
             block_means[i] = np.nan 
 
+
+############################
+########ExperiMental########
+
+if backend.use_cuda: 
+    from numba import cuda # type: ignore
+    # @backend.kernel
+    # def extract_cold_indices_kernel_1(idx, langevin_time, last_meas, dt_base, out_indices, out_count):
+    #     if idx == 0:
+    #         out_count[0] = 0
+    #     cuda.syncthreads()
+
+    #     if (langevin_time[idx] - last_meas[idx]) > (dt_base / 10):
+    #         j = cuda.atomic.add(out_count, 0, 1)
+    #         out_indices[j] = idx
+
+    # @backend.kernel
+    # def extract_cold_indices_kernel_2(idx, langevin_time, last_flush, delta_tau_block, out_indices, out_count):
+    #     if idx == 0:
+    #         out_count[0] = 0
+    #     cuda.syncthreads()
+
+    #     if (langevin_time[idx] - last_flush[idx]) > delta_tau_block:
+    #         j = cuda.atomic.add(out_count, 0, 1)
+    #         out_indices[j] = idx
+
+    @backend.kernel
+    def extract_cold_indices_kernel(idx, lt, last_action, lt_span, out_indices, out_count):
+        if idx == 0:
+            out_count[0] = 0
+        cuda.syncthreads()
+
+        if (lt[idx] - last_action[idx]) > lt_span:
+            j = cuda.atomic.add(out_count, 0, 1)
+            out_indices[j] = idx
+
+    @backend.kernel
+    def pack_block_means(index_pos, cold_indices, obs_sum, count, tau, tau_last_flush, block_means):
+        """
+        Based on a flush_mask, block_means are calculated and running sum is reset. 
+        """
+        idx = cold_indices[index_pos]
+        block_means[idx] = obs_sum[idx] / count[idx]
+        obs_sum[idx] = 0.0
+        count[idx] = 0
+        tau_last_flush[idx] = tau[idx]
+
+############################
+############################
 
 
 class MomentObservable():
@@ -75,10 +126,17 @@ class MomentObservable():
         self.stop_event = Event()
         self.daq = DAQThread(self.state.n_seeds, self.out_q, self.stop_event)
 
+        self.cold_indices = np.zeros(self.state.n_seeds, dtype=np.int32)
+        self.cold_count = np.array([1], dtype=np.int32)  # like a counter
+    
+        self.cold_indices_2 = np.zeros(self.state.n_seeds, dtype=np.int32)
+        self.cold_count_2 = np.array([1], dtype=np.int32)  # like a counter
+
         if backend.use_cuda: 
             from complex_langevin.utils.gpu_handler import GPU_handler
             self.handler = GPU_handler(self)
             self.to_device()
+
         
     def to_device(self):
         self.handler.to_device()
@@ -96,9 +154,20 @@ class MomentObservable():
     def phi(self):
         return self.state.phi_read
        
+    # def generate_kernel(self):
+    #     @self.backend.kernel
+    #     def _moment_kernel(idx, phi_arr, obs_running_sum, count, order, langevin_time, last_meas):
+    #         phi_idx = phi_arr[idx]
+    #         obs = phi_idx**order
+    #         obs_running_sum[idx] += obs
+    #         count[idx] += 1
+    #         last_meas[idx] = langevin_time[idx]
+    #     return _moment_kernel
+    
     def generate_kernel(self):
         @self.backend.kernel
-        def _moment_kernel(idx, phi_arr, obs_running_sum, count, order, langevin_time, last_meas):
+        def _moment_kernel(index_pos, cold_indices, phi_arr, obs_running_sum, count, order, langevin_time, last_meas):
+            idx = cold_indices[index_pos]
             phi_idx = phi_arr[idx]
             obs = phi_idx**order
             obs_running_sum[idx] += obs
@@ -107,27 +176,65 @@ class MomentObservable():
         return _moment_kernel
     
     def observe(self):
-        # self.backend.parallel_loop(self.kernel, self.state.n_seeds, self.state.phi_read, self.obs_running_sum, self.count, self.order)
-        self.cold = (self.state.langevin_time - self.last_meas) > self.state.dt_base/10
-        # self.log(f"lt: {self.state.langevin_time}")
-        # self.log(f"last meas: {self.last_meas}")
-        # self.log(f"cold:{self.cold}")
 
-        self.backend.act_parallel_loop(self.kernel, self.cold, self.state.n_seeds, self.state.phi_read, self.obs_running_sum, self.count, self.order, self.state.langevin_time, self.last_meas)
+        # self.cold = (self.state.langevin_time - self.last_meas) > self.state.dt_base/10
+        # self.backend.act_parallel_loop(self.kernel, self.cold, self.state.n_seeds, self.state.phi_read, self.obs_running_sum, self.count, self.order, self.state.langevin_time, self.last_meas)
         
-        # self.log(f"Field: {self.state.phi_read}")
-        # self.log("Kernel executed: ")
-        # self.log(f"Langevin times: {self.state.langevin_time}")
-        # self.log(f"Last fluash: {self.last_flush}")
-        # self.log(f"Old flush mask: {self.flush_mask}")
 
+        ############################
+        ########ExperiMental########
+        backend.parallel_loop(extract_cold_indices_kernel, self.state.n_seeds, self.state.langevin_time, self.last_meas, 
+                              self.state.dt_base/10, self.cold_indices, self.cold_count)
+        cold_count_host = self.cold_count.copy_to_host()[0]
+
+        if cold_count_host > 0:
+            self.backend.parallel_loop(
+                self.kernel, cold_count_host,
+                self.cold_indices,
+                self.state.phi_read,
+                self.obs_running_sum,
+                self.count,
+                self.order,
+                self.state.langevin_time,
+                self.last_meas
+            )
+
+            self.log(f"cold_count_host {cold_count_host}")
+            self.log(f"observing seeds {self.cold_indices.copy_to_host()}")
         if self.daq_active:
+
+            backend.parallel_loop(extract_cold_indices_kernel, self.state.n_seeds, self.state.langevin_time, self.last_flush, 
+                              self.delta_tau_block, self.cold_indices, self.cold_count)
+            cold_count_host = self.cold_count.copy_to_host()[0]
+            
+            if cold_count_host > 0:
+                    self.backend.parallel_loop(
+                        pack_block_means, cold_count_host,
+                        self.cold_indices,
+                        self.obs_running_sum,
+                        self.count,
+                        self.state.langevin_time,
+                        self.last_flush,
+                        self.block_means
+                    )
+
+                    self.log(f"cold_count_host_2 {cold_count_host}")
+                    self.log(f"flushing seeds {self.cold_indices.copy_to_host()}")
+                    # self.out_q.put((valid_idx, valid_vals))
+
+        ############################
+        ########ExperiMental########
+
+        # if self.daq_active:
+        #     # self.flush_mask = (self.state.langevin_time - self.last_flush>self.delta_tau_block) & (self.daq.block_counts < self.num_blocks)
+
             mark_flush_mask(
                 self.state.langevin_time, self.last_flush,
                 self.flush_mask, self.daq.block_counts, self.delta_tau_block,
                 self.num_blocks
             )
-            self.log(f"New Flush Mask: {self.flush_mask}")
+
+            # self.log(f"New Flush Mask: {self.flush_mask}")
 
             if np.any(self.flush_mask):  # only flush if needed
                 pack_block_means(
