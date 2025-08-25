@@ -7,7 +7,12 @@ from complex_langevin.config import CL_REAL, CL_COMPLEX
 backend = get_backend()
 
 class ZeroDScalarPhi4(Model):
-    def __init__(self, sigma: CL_COMPLEX, lamb: CL_REAL) -> None:
+    def __init__(self, sigma: CL_COMPLEX = None, lamb: CL_REAL = None) -> None:
+        if sigma is None:
+            sigma = CL_COMPLEX(1+1j)
+        if lamb is None:
+            lamb = CL_REAL(1)
+            
         self.sigma = sigma
         self.lamb = lamb
         self.drift_kernel = self.generate_drift_kernel()
@@ -17,9 +22,10 @@ class ZeroDScalarPhi4(Model):
         _lamb = self.lamb
 
         @backend.kernel
-        def _drift_kernel(idx, drift_arr, phi_arr) -> None:
-            phi_idx = phi_arr[idx]
-            drift_arr[idx] = -(_sigma * phi_idx + _lamb * phi_idx**3)
+        def _drift_kernel(idx, idx_list, drift_arr, phi_arr) -> None:
+            _idx = idx_list[idx]
+            phi_idx = phi_arr[_idx]
+            drift_arr[_idx] = -(_sigma * phi_idx + _lamb * phi_idx**3)
 
         return _drift_kernel
 
