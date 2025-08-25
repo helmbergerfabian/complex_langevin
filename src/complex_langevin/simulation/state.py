@@ -16,20 +16,22 @@ class SimState:
     Holds simulation state for multiple Langevin trajectories (seeds).
     Supports CPU or GPU (CUDA) via backend abstraction.
     """
-    def __init__(self, n_seeds: int, dt_base = None):
-        self.n_seeds = n_seeds
-        self.dt_base = dt_base or CL_REAL(1e-4)
+    def __init__(self, n_seeds: int = None, dt_base = None):
+        self.n_seeds = n_seeds if n_seeds is not None else int(1e4)
+        self.dt_base = dt_base if dt_base is not None else CL_REAL(1e-4)
         
-        self.phi_read = zeros(n_seeds, dtype=CL_COMPLEX)
+        self.phi_read = zeros(self.n_seeds, dtype=CL_COMPLEX)
         # self.phi_write = self.phi_read.copy()
 
-        self.noise_arr = zeros(n_seeds, dtype=CL_REAL)
-        self.dt_ada_arr = ones(n_seeds, dtype=CL_REAL)
-        self.drift_arr = zeros(n_seeds, dtype=CL_COMPLEX)
-        self.langevin_time = zeros(n_seeds, dtype=CL_REAL)
+        self.noise_arr = zeros(self.n_seeds, dtype=CL_REAL)
+        self.dt_ada_arr = ones(self.n_seeds, dtype=CL_REAL)
+        self.drift_arr = zeros(self.n_seeds, dtype=CL_COMPLEX)
+        self.langevin_time = zeros(self.n_seeds, dtype=CL_REAL)
 
         self.global_step = 0
         self.alive = np.full(self.n_seeds, True)
+        self.alive_count = np.array([self.n_seeds])
+        self.alive_idx_list = np.arange(self.alive_count)
 
         if backend.use_cuda: 
             from complex_langevin.utils.gpu_handler import GPU_handler
