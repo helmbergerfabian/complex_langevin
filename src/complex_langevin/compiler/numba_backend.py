@@ -30,6 +30,16 @@ class NumbaBackend(SimulationBackend):
             compiled_kernels[kernel_function] = numba_func
         compiled_kernels[kernel_function](iter_max, *args)
 
+    def serial_loop(self, kernel_function, iter_max, *args):
+        if kernel_function not in compiled_kernels:
+            @numba.njit(parallel=False, nogil=True, fastmath=True)
+            def numba_func(iter_max, *args):
+                for xi in prange(iter_max):
+                    kernel_function(xi, *args)
+
+            compiled_kernels[kernel_function] = numba_func
+        compiled_kernels[kernel_function](iter_max, *args)
+
     def act_parallel_loop(self, kernel_function, act_matrix, iter_max, *args):
         if kernel_function not in compiled_act_kernels:
 
