@@ -7,7 +7,9 @@ from complex_langevin.config import CL_REAL, log
 from complex_langevin.simulation.state import SimState
 from complex_langevin.utils.cl_types import NoiseKernel, EvolveKernel, dtadaKernel
 from numpy.random import normal
+
 from numba.cuda.random import xoroshiro128p_normal_float32, create_xoroshiro128p_states
+from numba import cuda
 
 import math
 SQRT2 = math.sqrt(2)
@@ -84,19 +86,35 @@ class cl_evolution():
             if drift_idx > DS_MAX_LOWER and mean_dS_max < drift_idx:
                 new_val = mean_dS_max / drift_idx 
                 dt_ada_arr[_idx] = new_val
+
         return _dt_ada_kernel
 
+    
     def generate_kill_kernel(self):
-        @self.backend.kernel
-        def _kill_kernel(idx, idx_list, dt_ada_arr, alive, out_indices, out_count) -> None:
-            _idx = idx_list[idx]
-            
-            if dt_ada_arr[_idx] < 1e-3: 
-                alive[_idx] = False
-            else:
-                out_indices[out_count[0]] = _idx
-                out_count[0] += 1
+        if self.backend.use_cuda: 
+            @self.backend.kernel
+            def _kill_kernel(idx, idx_list, dt_ada_arr, alive, out_indices, out_count) -> None:
+                _idx = idx_list[idx]
+                
+                if dt_ada_arr[_idx] < 1e-3: 
+                    alive[_idx] = False
+                else:
+                    j = cuda.atomic.add(out_count, 0, 1)
+                    out_indices[j] = idx
+
+        else: 
+            @self.backend.kernel
+            def _kill_kernel(idx, idx_list, dt_ada_arr, alive, out_indices, out_count) -> None:
+                _idx = idx_list[idx]
+                
+                if dt_ada_arr[_idx] < 1e-3: 
+                    alive[_idx] = False
+                else:
+                    out_indices[out_count[0]] = _idx
+                    out_count[0] += 1
 
         return _kill_kernel
+    
+        
 
     def log(self, message): log(self, "EVO", message)
