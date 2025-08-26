@@ -2,7 +2,7 @@
 
 # from complex_langevin.compiler.factory import get_backend
 from complex_langevin.compiler import backend
-from complex_langevin.config import CL_COMPLEX, CL_REAL, log
+from complex_langevin.config import CL_COMPLEX, CL_REAL, log, CL_INT
 
 from numpy import zeros, ones
 import os
@@ -30,8 +30,9 @@ class SimState:
 
         self.global_step = 0
         self.alive = np.full(self.n_seeds, True)
-        self.alive_count = np.array([self.n_seeds])
+        self.alive_count = np.array([self.n_seeds], dtype = CL_INT)
         self.alive_idx_list = np.arange(self.alive_count)
+        self.zero_buffer = np.array([0], dtype = CL_INT)
 
         if backend.use_cuda: 
             from complex_langevin.utils.gpu_handler import GPU_handler
