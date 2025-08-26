@@ -6,6 +6,7 @@ class PythonBackend(SimulationBackend):
         super().__init__()
         self._kernel = (lambda f: f)
         self.use_cuda = False
+        self.serial_loop = self.parallel_loop
         
     @property
     def kernel(self):
