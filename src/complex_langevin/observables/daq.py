@@ -1,7 +1,7 @@
 from threading import Event, Thread
 from queue import Queue, Empty
 
-from complex_langevin.config import log, CL_INT
+from complex_langevin.config import log, CL_INT, CL_REAL
 
 import numpy as np
 def jackknife_1d(data):
@@ -17,14 +17,14 @@ def jackknife_1d(data):
     return mean, sem
 
 class DAQThread(Thread):
-    def __init__(self, n_seeds, in_q: Queue, stop_event: Event):
+    def __init__(self, n_seeds, in_q: Queue, stop_event: Event, max_blocks = None):
         super().__init__(daemon=True)
         self.in_q = in_q
         self.stop_event = stop_event
 
-        max_blocks = 100  # configurable
-        self.block_means = np.full((n_seeds, max_blocks), np.nan)
-        self.block_counts = np.zeros(n_seeds, dtype=CL_INT)
+        self.max_blocks = max_blocks or 50  # configurable
+        self.block_means = np.full((n_seeds, self.max_blocks), np.nan+1j*np.nan)
+        self.block_counts = np.zeros(n_seeds, dtype=CL_REAL)
         self.log_file = None
 
     def run(self):
@@ -56,13 +56,22 @@ class DAQThread(Thread):
         return means, sems
     
     def process(self, data):
-        indices, values = data  # 1D arrays
-        for seed, new_mean in zip(indices, values):
-            k = self.block_counts[seed]
+        cold_indices, new_mean, cold_count = data
+        for idx in range(cold_count):
+            _idx = cold_indices[idx]
+            k = CL_INT(self.block_counts[_idx])
             if k < self.block_means.shape[1]:
-                self.block_means[seed, k] = new_mean
-                self.block_counts[seed] += 1
-            else:
-                print(f"[DAQ] Warning: block buffer full for seed {seed}")
+                self.block_means[_idx, k] = new_mean[_idx]
+                self.block_counts[_idx] += 1
+            # else:
+            #     print(f"[DAQ] Warning: block buffer full for seed {_idx}")
+        # indices, values = data  # 1D arrays
+        # for seed, new_mean in zip(indices, values):
+        #     k = self.block_counts[seed]
+        #     if k < self.block_means.shape[1]:
+        #         self.block_means[seed, k] = new_mean
+        #         self.block_counts[seed] += 1
+        #     else:
+        #         print(f"[DAQ] Warning: block buffer full for seed {seed}")
     
     def log(self, message): log(self, "DAQ", message)
