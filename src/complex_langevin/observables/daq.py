@@ -48,7 +48,7 @@ class DAQThread(Thread):
         for seed in range(n_seeds):
             count = self.block_counts[seed]
             if count >= 2:
-                data = self.block_means[seed, :count]
+                data = self.block_means[int(seed), :int(count)]
                 mean, sem = jackknife_1d(data)
                 means[seed] = mean
                 sems[seed] = sem
