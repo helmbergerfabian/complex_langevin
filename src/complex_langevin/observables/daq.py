@@ -56,13 +56,22 @@ class DAQThread(Thread):
         return means, sems
     
     def process(self, data):
-        cold_indices, new_mean, cold_count = data
-        for idx in range(cold_count):
-            _idx = cold_indices[idx]
-            k = CL_INT(self.block_counts[_idx])
+        indices, values = data
+        for seed, val in zip(indices, values):
+            k = int(self.block_counts[seed])
             if k < self.block_means.shape[1]:
-                self.block_means[_idx, k] = new_mean[_idx]
-                self.block_counts[_idx] += 1
+                self.block_means[seed, k] = val
+                self.block_counts[seed] += 1
+
+    
+    # def process(self, data):
+    #     cold_indices, new_mean, cold_count = data
+    #     for idx in range(cold_count):
+    #         _idx = cold_indices[idx]
+    #         k = CL_INT(self.block_counts[_idx])
+    #         if k < self.block_means.shape[1]:
+    #             self.block_means[_idx, k] = new_mean[_idx]
+    #             self.block_counts[_idx] += 1
             # else:
             #     print(f"[DAQ] Warning: block buffer full for seed {_idx}")
         # indices, values = data  # 1D arrays
