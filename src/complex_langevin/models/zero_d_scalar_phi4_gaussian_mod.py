@@ -22,20 +22,22 @@ class ZeroDScalarPhi4GaussianMod(Model):
         _pull = self.pull
 
         @backend.kernel
-        def _drift(idx, drift_arr, phi_arr):
-            phi_idx = phi_arr[idx]
+        def _drift(idx, idx_list, drift_arr, phi_arr):
+            _idx = idx_list[idx]
+
+            phi_idx = phi_arr[_idx]
 
             action = _sigma/2*phi_idx**2+_lamb/4*phi_idx**4
             mod = -_massmod*phi_idx**2/2
 
             action_mod = action + mod
-            drift = _sigma*phi_idx+_lamb*phi_idx**3
+            drift = (_sigma*phi_idx+_lamb*phi_idx**3)
 
             if action_mod.real < 0:
                 out = drift-_pull*(drift-_massmod*phi_idx)*cmath.exp(action_mod) / (1+_pull*cmath.exp(action_mod))
             else: 
                 out = drift-_pull*(drift-_massmod*phi_idx) / (cmath.exp(-action_mod)+_pull)
-            drift_arr[idx] = out
+            drift_arr[_idx] = -out
 
         return _drift
     
