@@ -269,7 +269,12 @@ class MomentObservable():
                             self.last_flush,
                             self.block_means
                         )
-                        self.out_q.put((self.cold_indices.copy(), self.block_means.copy(), self.cold_count[0]))
+                        
+                        idxs = self.cold_indices[:self.cold_count[0]].copy()
+                        vals = self.block_means[idxs].copy()
+                        self.out_q.put((idxs, vals))
+
+                        # self.out_q.put((self.cold_indices.copy(), self.block_means.copy(), self.cold_count[0]))
 
                     # self.state.alive_count = self.cold_count.copy()
                     # self.state.alive_idx_list = self.cold_indices.copy()
